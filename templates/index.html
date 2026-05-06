@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - 校园二手交易平台{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div>
+        <div class="hero-kicker">Campus Marketplace</div>
+        <h1>发现校园里的好物，让闲置重新流通</h1>
+        <p>浏览二手商品、查看卖家信息、快速下单购买。平台将商品、订单和用户数据统一管理，适合校园内部轻量交易场景。</p>
+        <div class="hero-actions">
+            <a class="button" href="{{ url_for('items') }}">浏览商品</a>
+            <a class="button ghost" href="{{ url_for('queries') }}">查看数据统计</a>
+        </div>
+    </div>
+    <div class="hero-card">
+        <span>当前在售商品</span>
+        <strong>{{ stats.unsold_count }}</strong>
+        <a class="button ghost" href="{{ url_for('items') }}">立即查看</a>
+    </div>
+</section>
+
+<section class="metrics" aria-label="平台概览">
+    <div class="stat-card">
+        <span>用户数</span>
+        <strong>{{ stats.user_count }}</strong>
+    </div>
+    <div class="stat-card">
+        <span>商品数</span>
+        <strong>{{ stats.item_count }}</strong>
+    </div>
+    <div class="stat-card">
+        <span>未售商品</span>
+        <strong>{{ stats.unsold_count }}</strong>
+    </div>
+    <div class="stat-card">
+        <span>订单数</span>
+        <strong>{{ stats.order_count }}</strong>
+    </div>
+</section>
+
+<section class="panel">
+    <div class="section-head">
+        <div>
+            <div class="eyebrow">快捷入口</div>
+            <h2>常用功能</h2>
+        </div>
+        <form method="post" action="{{ url_for('reset') }}" onsubmit="return confirm('确认要重置数据库到初始状态吗？');">
+            <button class="secondary" type="submit">重置数据</button>
+        </form>
+    </div>
+    <div class="feature-grid">
+        <a class="feature-card" href="{{ url_for('items') }}">
+            <strong>商品市场</strong>
+            <span>查看商品价格、分类、卖家和售出状态。</span>
+        </a>
+        <a class="feature-card" href="{{ url_for('items') }}">
+            <strong>发布商品</strong>
+            <span>录入商品名称、分类、价格和卖家信息。</span>
+        </a>
+        <a class="feature-card" href="{{ url_for('orders_page') }}">
+            <strong>订单记录</strong>
+            <span>追踪每笔成交商品、买家和日期。</span>
+        </a>
+        <a class="feature-card" href="{{ url_for('users') }}">
+            <strong>用户目录</strong>
+            <span>查看平台用户和联系方式。</span>
+        </a>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}商品 - 校园二手交易平台{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('index') }}">首页</a>
+    <span>/</span>
+    <span>商品</span>
+</div>
+
+<section class="hero compact">
+    <div>
+        <div class="hero-kicker">Marketplace</div>
+        <h1>商品市场</h1>
+        <p>查看校园二手商品，支持前端搜索和排序；未售商品可直接购买，已售商品会自动标记。</p>
+    </div>
+</section>
+
+<section class="panel">
+    <div class="section-head">
+        <div>
+            <div class="eyebrow">商品列表</div>
+            <h2>全部商品</h2>
+        </div>
+        <div class="toolbar">
+            <label>搜索商品
+                <input id="item-search" type="search" placeholder="输入名称、分类或卖家">
+            </label>
+            <label>排序
+                <select id="item-sort">
+                    <option value="default">默认排序</option>
+                    <option value="price-asc">价格从低到高</option>
+                    <option value="price-desc">价格从高到低</option>
+                    <option value="open-first">未售优先</option>
+                </select>
+            </label>
+        </div>
+    </div>
+
+    <div class="item-grid" id="item-grid">
+        {% for item in items %}
+            <article
+                class="item-card"
+                data-name="{{ item.item_name|lower }}"
+                data-category="{{ item.category|lower }}"
+                data-seller="{{ item.seller_name|lower }} {{ item.seller_id|lower }}"
+                data-price="{{ item.price }}"
+                data-status="{{ item.status }}"
+                data-index="{{ loop.index }}"
+            >
+                <div class="item-media" aria-hidden="true">{{ item.item_name[:1] }}</div>
+                <div class="item-body">
+                    <div class="item-title-row">
+                        <div>
+                            <h3 class="item-name">{{ item.item_name }}</h3>
+                            <span class="status-pill {{ 'sold' if item.status == 1 else 'open' }}">
+                                {{ "已售出" if item.status == 1 else "未售出" }}
+                            </span>
+                        </div>
+                        <div class="price">¥{{ "%.2f"|format(item.price) }}</div>
+                    </div>
+
+                    <div class="meta-list">
+                        <div><span>分类</span><strong>{{ item.category }}</strong></div>
+                        <div><span>卖家</span><strong>{{ item.seller_name }}</strong></div>
+                        <div><span>编号</span><strong>{{ item.item_id }}</strong></div>
+                    </div>
+
+                    <div class="row-actions">
+                        <form method="post" action="{{ url_for('update_price', item_id=item.item_id) }}">
+                            <input type="number" name="price" min="0" step="0.01" value="{{ item.price }}" aria-label="修改 {{ item.item_name }} 价格" required>
+                            <button type="submit">改价</button>
+                        </form>
+                        {% if item.status == 0 %}
+                            <form method="post" action="{{ url_for('delete_item', item_id=item.item_id) }}" onsubmit="return confirm('确认删除 {{ item.item_name }} 吗？');">
+                                <button class="danger" type="submit">删除</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="grid-two">
+    <div class="panel">
+        <div class="section-head">
+            <div>
+                <div class="eyebrow">发布</div>
+                <h2>新增商品</h2>
+            </div>
+        </div>
+        <form class="stack" method="post" action="{{ url_for('add_item') }}">
+            <div class="form-grid">
+                <label>商品编号
+                    <input name="item_id" placeholder="留空自动生成，如 i006">
+                </label>
+                <label>商品名称
+                    <input name="item_name" value="Notebook" required>
+                </label>
+                <label>分类
+                    <input name="category" value="Book" required>
+                </label>
+                <label>价格
+                    <input type="number" name="price" min="0" step="0.01" value="25" required>
+                </label>
+            </div>
+            <label>卖家
+                <select name="seller_id" required>
+                    {% for user in users %}
+                        <option value="{{ user.user_id }}">{{ user.user_id }} - {{ user.user_name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <button type="submit">发布商品</button>
+        </form>
+    </div>
+
+    <div class="panel">
+        <div class="section-head">
+            <div>
+                <div class="eyebrow">购买</div>
+                <h2>购买商品</h2>
+            </div>
+        </div>
+        <form class="stack" method="post" action="{{ url_for('purchase') }}" onsubmit="return confirm('确认购买该商品并生成订单吗？');">
+            <label>未售商品
+                <select name="item_id" id="purchase-item" required>
+                    {% for item in items if item.status == 0 %}
+                        <option value="{{ item.item_id }}" data-seller-id="{{ item.seller_id }}">{{ item.item_id }} - {{ item.item_name }} - ¥{{ "%.2f"|format(item.price) }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>买家
+                <select name="buyer_id" id="purchase-buyer" required>
+                    {% for user in users %}
+                        <option value="{{ user.user_id }}">{{ user.user_id }} - {{ user.user_name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>订单日期
+                <input type="date" name="order_date">
+            </label>
+            <button type="submit">确认购买</button>
+        </form>
+    </div>
+</section>
+
+<script>
+(() => {
+    const scrollKey = "campusTrade:itemScroll";
+    const savedPosition = sessionStorage.getItem(scrollKey);
+    if (savedPosition !== null) {
+        sessionStorage.removeItem(scrollKey);
+        requestAnimationFrame(() => window.scrollTo(0, Number(savedPosition)));
+    }
+
+    for (const form of document.querySelectorAll("form")) {
+        form.addEventListener("submit", () => {
+            sessionStorage.setItem(scrollKey, String(window.scrollY));
+        }, { capture: true });
+    }
+
+    const searchInput = document.getElementById("item-search");
+    const sortSelect = document.getElementById("item-sort");
+    const grid = document.getElementById("item-grid");
+    const purchaseItem = document.getElementById("purchase-item");
+    const purchaseBuyer = document.getElementById("purchase-buyer");
+
+    const syncBuyerOptions = () => {
+        if (!purchaseItem || !purchaseBuyer) return;
+        const selectedItem = purchaseItem.selectedOptions[0];
+        const sellerId = selectedItem ? selectedItem.dataset.sellerId : "";
+        for (const option of purchaseBuyer.options) {
+            option.disabled = option.value === sellerId;
+        }
+        if (purchaseBuyer.selectedOptions[0]?.disabled) {
+            const firstAvailable = Array.from(purchaseBuyer.options).find((option) => !option.disabled);
+            if (firstAvailable) purchaseBuyer.value = firstAvailable.value;
+        }
+    };
+
+    if (purchaseItem && purchaseBuyer) {
+        purchaseItem.addEventListener("change", syncBuyerOptions);
+        syncBuyerOptions();
+
+        purchaseBuyer.closest("form")?.addEventListener("submit", (event) => {
+            const sellerId = purchaseItem.selectedOptions[0]?.dataset.sellerId;
+            if (sellerId && purchaseBuyer.value === sellerId) {
+                event.preventDefault();
+                sessionStorage.removeItem(scrollKey);
+                alert("不能购买自己发布的商品，请选择其他买家。");
+            }
+        });
+    }
+
+    if (!searchInput || !sortSelect || !grid) return;
+
+    const cards = Array.from(grid.querySelectorAll(".item-card"));
+
+    const applyFilters = () => {
+        const keyword = searchInput.value.trim().toLowerCase();
+        for (const card of cards) {
+            const haystack = `${card.dataset.name} ${card.dataset.category} ${card.dataset.seller}`;
+            card.hidden = keyword && !haystack.includes(keyword);
+        }
+    };
+
+    const applySort = () => {
+        const sorted = [...cards];
+        sorted.sort((a, b) => {
+            if (sortSelect.value === "price-asc") return Number(a.dataset.price) - Number(b.dataset.price);
+            if (sortSelect.value === "price-desc") return Number(b.dataset.price) - Number(a.dataset.price);
+            if (sortSelect.value === "open-first") return Number(a.dataset.status) - Number(b.dataset.status);
+            return Number(a.dataset.index) - Number(b.dataset.index);
+        });
+        for (const card of sorted) grid.appendChild(card);
+    };
+
+    searchInput.addEventListener("input", applyFilters);
+    sortSelect.addEventListener("change", applySort);
+})();
+</script>
+{% endblock %}

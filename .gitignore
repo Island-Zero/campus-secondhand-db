@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+.venv/
+venv/
+env/
+
+*.log
+test_*.db
+flask_*.log
+
+.env
+.DS_Store
+Thumbs.db

@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}查询 - 校园二手交易平台{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('index') }}">首页</a>
+    <span>/</span>
+    <span>查询</span>
+</div>
+
+<section class="hero compact">
+    <div>
+        <div class="hero-kicker">Insights</div>
+        <h1>商品与订单数据查询</h1>
+        <p>按商品状态、价格、分类、卖家、买家和日期筛选数据，快速查看平台交易概况。</p>
+    </div>
+</section>
+
+<section class="metrics" aria-label="查询概览">
+    <div class="stat-card">
+        <span>商品总数</span>
+        <strong>{{ summary.total_items }}</strong>
+    </div>
+    <div class="stat-card">
+        <span>平均价格</span>
+        <strong>{{ "%.2f"|format(summary.avg_price or 0) }}</strong>
+    </div>
+    <div class="stat-card">
+        <span>已售商品</span>
+        <strong>{{ summary.sold_count }}</strong>
+    </div>
+    <div class="stat-card">
+        <span>分类数</span>
+        <strong>{{ summary.category_count }}</strong>
+    </div>
+</section>
+
+<section class="query-layout" id="query-workspace">
+    <section class="panel query-catalog">
+        {% for section in query_sections %}
+            <div class="catalog-group">
+                <div class="catalog-title">{{ section.name }}</div>
+                <div class="catalog-grid">
+                    {% for query in section.queries %}
+                        <a
+                            class="catalog-card {{ 'active' if active_key == query.key else '' }}"
+                            href="{{ url_for('queries', query=query.key) }}"
+                            data-query-link
+                        >
+                            <strong>{{ query.label }}</strong>
+                            <span>{{ query.title }}</span>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    </section>
+
+    <div id="query-panel-container">
+        {% include "query_panel.html" %}
+    </div>
+</section>
+
+<script>
+(() => {
+    const workspace = document.getElementById("query-workspace");
+    const panelContainer = document.getElementById("query-panel-container");
+    const catalog = document.querySelector(".query-catalog");
+    if (!workspace || !panelContainer || !catalog) return;
+
+    const buildFragmentUrl = (url) => {
+        const target = new URL(url, window.location.origin);
+        target.pathname = "/queries/panel";
+        return target.toString();
+    };
+
+    const updateActiveCards = (queryKey) => {
+        for (const link of catalog.querySelectorAll("[data-query-link]")) {
+            const target = new URL(link.href, window.location.origin);
+            const isActive = target.searchParams.get("query") === queryKey;
+            link.classList.toggle("active", isActive);
+        }
+    };
+
+    const bindPanelEvents = () => {
+        const form = panelContainer.querySelector(".query-form");
+        if (form) {
+            form.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                const params = new URLSearchParams(new FormData(form));
+                const url = `${window.location.origin}/queries?${params.toString()}`;
+                await loadPanel(url, true);
+            });
+        }
+
+        const resetLink = panelContainer.querySelector(".query-actions a");
+        if (resetLink) {
+            resetLink.addEventListener("click", async (event) => {
+                event.preventDefault();
+                await loadPanel(resetLink.href, true);
+            });
+        }
+    };
+
+    const loadPanel = async (url, pushState = false) => {
+        panelContainer.classList.add("loading");
+        try {
+            const scrollX = window.scrollX;
+            const scrollY = window.scrollY;
+            const response = await fetch(buildFragmentUrl(url), {
+                headers: { "X-Requested-With": "fetch" },
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            panelContainer.innerHTML = await response.text();
+
+            const pageUrl = new URL(url, window.location.origin);
+            const queryKey = pageUrl.searchParams.get("query") || "seller_items";
+            updateActiveCards(queryKey);
+            bindPanelEvents();
+            if (pushState) {
+                window.history.pushState({}, "", `${pageUrl.pathname}${pageUrl.search}`);
+            }
+            window.scrollTo(scrollX, scrollY);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            panelContainer.classList.remove("loading");
+        }
+    };
+
+    for (const link of catalog.querySelectorAll("[data-query-link]")) {
+        link.addEventListener("click", async (event) => {
+            event.preventDefault();
+            await loadPanel(link.href, true);
+        });
+    }
+
+    window.addEventListener("popstate", async () => {
+        await loadPanel(window.location.href, false);
+    });
+
+    bindPanelEvents();
+})();
+</script>
+{% endblock %}

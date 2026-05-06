@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}用户 - 校园二手交易平台{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('index') }}">首页</a>
+    <span>/</span>
+    <span>用户</span>
+</div>
+
+<section class="hero compact">
+    <div>
+        <div class="hero-kicker">Users</div>
+        <h1>用户目录</h1>
+        <p>查看平台用户基础信息，便于确认商品卖家和订单买家。</p>
+    </div>
+</section>
+
+<section class="panel">
+    <div class="section-head">
+        <div>
+            <div class="eyebrow">用户列表</div>
+            <h2>全部用户</h2>
+        </div>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>用户</th>
+                    <th>用户编号</th>
+                    <th>联系电话</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                    <tr>
+                        <td>
+                            <div class="user-cell">
+                                <span class="avatar">{{ user.user_name[:1] }}</span>
+                                <strong>{{ user.user_name }}</strong>
+                            </div>
+                        </td>
+                        <td>{{ user.user_id }}</td>
+                        <td>{{ user.phone }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

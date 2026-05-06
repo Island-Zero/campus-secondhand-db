@@ -1,0 +1,90 @@
+{% macro render_input(field, values) %}
+    {% if field.type == "select" %}
+        <label>
+            <span>{{ field.label }}</span>
+            <select name="{{ field.name }}">
+                {% for option in field.options %}
+                    <option value="{{ option.value }}" {% if values[field.name] == option.value %}selected{% endif %}>
+                        {{ option.label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </label>
+    {% else %}
+        <label>
+            <span>{{ field.label }}</span>
+            <input
+                type="{{ field.type }}"
+                name="{{ field.name }}"
+                value="{{ values[field.name] }}"
+                {% if field.step %}step="{{ field.step }}"{% endif %}
+            >
+        </label>
+    {% endif %}
+{% endmacro %}
+
+{% macro render_table(rows) %}
+    {% if rows %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        {% for key in rows[0].keys() %}
+                            <th>{{ key }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                        <tr>
+                            {% for key in row.keys() %}
+                                <td>{{ row[key] }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <strong>暂无匹配结果</strong>
+            <span>可以调整筛选条件后重新查询。</span>
+        </div>
+    {% endif %}
+{% endmacro %}
+
+<section class="panel query-panel">
+    <div class="section-head">
+        <div>
+            <div class="eyebrow">{{ active_query.section }}</div>
+            <h2>{{ active_query.title }}</h2>
+        </div>
+        <div class="result-chip">{{ result_rows|length }} 条结果</div>
+    </div>
+    <p>{{ active_query.description }}</p>
+
+    <form class="query-form" method="get" action="{{ url_for('queries') }}">
+        <input type="hidden" name="query" value="{{ active_key }}">
+        <div class="query-form-grid">
+            {% for field in active_query.inputs %}
+                {{ render_input(field, values) }}
+            {% endfor %}
+        </div>
+        <div class="query-actions">
+            <button type="submit">执行查询</button>
+            <a class="button ghost" href="{{ url_for('queries', query=active_key) }}">恢复默认</a>
+        </div>
+    </form>
+
+    <div id="query-results" class="query-results" tabindex="-1">
+        {{ render_table(result_rows) }}
+    </div>
+
+    <div class="sql-preview">
+        <div class="sql-head">
+            <strong>SQL</strong>
+            <span>参数：{{ sql_params if sql_params else "无" }}</span>
+        </div>
+        <pre>{{ sql_text }}</pre>
+    </div>
+</section>

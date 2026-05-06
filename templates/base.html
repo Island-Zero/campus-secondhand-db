@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}校园二手交易平台{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="app-shell">
+        <header class="site-header">
+            <a class="brand" href="{{ url_for('index') }}" aria-label="校园二手交易平台首页">
+                <span class="brand-mark">易</span>
+                <span class="brand-text">校园二手</span>
+            </a>
+            <nav class="nav-links" aria-label="主导航">
+                <a class="{{ 'active' if request.endpoint == 'index' else '' }}" href="{{ url_for('index') }}">首页</a>
+                <a class="{{ 'active' if request.endpoint == 'items' else '' }}" href="{{ url_for('items') }}">商品</a>
+                <a class="{{ 'active' if request.endpoint == 'users' else '' }}" href="{{ url_for('users') }}">用户</a>
+                <a class="{{ 'active' if request.endpoint == 'orders_page' else '' }}" href="{{ url_for('orders_page') }}">订单</a>
+                <a class="{{ 'active' if request.endpoint in ['queries', 'queries_panel'] else '' }}" href="{{ url_for('queries') }}">查询</a>
+                <a class="{{ 'active' if request.endpoint == 'notes' else '' }}" href="{{ url_for('notes') }}">规则</a>
+            </nav>
+        </header>
+
+        <main class="page">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="messages" role="status" aria-live="polite">
+                        {% for category, message in messages %}
+                            <div class="message {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}平台规则 - 校园二手交易平台{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('index') }}">首页</a>
+    <span>/</span>
+    <span>规则</span>
+</div>
+
+<section class="hero compact">
+    <div>
+        <div class="hero-kicker">Rules</div>
+        <h1>平台规则与数据保护</h1>
+        <p>交易平台需要清晰的权限边界、稳定的订单处理流程和可靠的数据恢复方案。</p>
+    </div>
+</section>
+
+<section class="grid-two">
+    <div class="panel">
+        <div class="section-head">
+            <div>
+                <div class="eyebrow">安全</div>
+                <h2>权限控制</h2>
+            </div>
+        </div>
+        <div class="note-list">
+            <div class="note-item">
+                <strong>删除权限</strong>
+                <p>平台应区分管理员和普通用户。普通用户不开放删除接口，数据库层也不授予 DELETE 权限；管理员操作需要经过身份校验。</p>
+            </div>
+            <div class="note-item">
+                <strong>只读访问</strong>
+                <p>面向普通浏览用户时，可以只开放查询页面和查询接口，数据库连接也可以使用只读模式，降低误操作风险。</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="section-head">
+            <div>
+                <div class="eyebrow">交易</div>
+                <h2>并发与恢复</h2>
+            </div>
+        </div>
+        <div class="note-list">
+            <div class="note-item">
+                <strong>重复购买控制</strong>
+                <p>购买时先锁定写事务，再检查商品状态，成功后更新商品并写入订单；订单表对商品编号设置唯一约束，避免同一商品重复成交。</p>
+            </div>
+            <div class="note-item">
+                <strong>异常恢复</strong>
+                <p>未提交事务会自动回滚，已提交事务会被保留。生产环境应定期备份数据库文件，或使用支持 WAL、binlog 的数据库进行恢复。</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
