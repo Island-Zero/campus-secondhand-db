@@ -1,5 +1,7 @@
 import os
+import shutil
 import sqlite3
+import tempfile
 from datetime import date
 from pathlib import Path
 
@@ -7,9 +9,11 @@ from flask import Flask, flash, g, redirect, render_template, request, url_for
 
 
 BASE_DIR = Path(__file__).resolve().parent
-DATABASE = Path(os.environ.get("DB_PATH", BASE_DIR / "campus_trade.db"))
+BUNDLED_DATABASE = BASE_DIR / "campus_trade.db"
+DEFAULT_DATABASE = Path(tempfile.gettempdir()) / "campus_trade.db" if os.environ.get("VERCEL") else BUNDLED_DATABASE
+DATABASE = Path(os.environ.get("DB_PATH", DEFAULT_DATABASE))
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="public", static_url_path="/static")
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-key")
 
 
@@ -177,8 +181,15 @@ QUERY_DEFINITIONS = {
 QUERY_SECTIONS = ["基本查询", "连接查询", "聚合与分组", "视图"]
 
 
+def prepare_database_file():
+    DATABASE.parent.mkdir(parents=True, exist_ok=True)
+    if not DATABASE.exists() and BUNDLED_DATABASE.exists() and DATABASE != BUNDLED_DATABASE:
+        shutil.copy2(BUNDLED_DATABASE, DATABASE)
+
+
 def get_db():
     if "db" not in g:
+        prepare_database_file()
         g.db = sqlite3.connect(DATABASE)
         g.db.row_factory = sqlite3.Row
         g.db.execute("PRAGMA foreign_keys = ON")
@@ -299,6 +310,7 @@ def reset_schema(db):
 
 
 def init_db(force=False):
+    prepare_database_file()
     db = sqlite3.connect(DATABASE)
     db.execute("PRAGMA foreign_keys = ON")
     try:
@@ -316,6 +328,7 @@ def init_db(force=False):
 
 @app.before_request
 def ensure_database():
+    prepare_database_file()
     if not DATABASE.exists():
         init_db()
 
