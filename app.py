@@ -13,7 +13,7 @@ BUNDLED_DATABASE = BASE_DIR / "campus_trade.db"
 DEFAULT_DATABASE = Path(tempfile.gettempdir()) / "campus_trade.db" if os.environ.get("VERCEL") else BUNDLED_DATABASE
 DATABASE = Path(os.environ.get("DB_PATH", DEFAULT_DATABASE))
 
-app = Flask(__name__, static_folder="public", static_url_path="/static")
+app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-key")
 
 
