@@ -5,7 +5,7 @@ import tempfile
 from datetime import date
 from pathlib import Path
 
-from flask import Flask, flash, g, redirect, render_template, request, url_for
+from flask import Flask, flash, g, redirect, render_template, request, send_from_directory, url_for
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -13,8 +13,16 @@ BUNDLED_DATABASE = BASE_DIR / "campus_trade.db"
 DEFAULT_DATABASE = Path(tempfile.gettempdir()) / "campus_trade.db" if os.environ.get("VERCEL") else BUNDLED_DATABASE
 DATABASE = Path(os.environ.get("DB_PATH", DEFAULT_DATABASE))
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder=None)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-key")
+
+
+@app.route("/static/<path:filename>")
+def static(filename):
+    for directory in (BASE_DIR / "static", BASE_DIR / "public" / "static"):
+        if (directory / filename).exists():
+            return send_from_directory(directory, filename)
+    return send_from_directory(BASE_DIR / "static", filename)
 
 
 INITIAL_USERS = [
