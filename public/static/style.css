@@ -510,6 +510,14 @@ select:focus {
     color: #5f6875;
 }
 
+.field-hint {
+    display: inline-flex;
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
 .row-actions form {
     display: flex;
     gap: 8px;

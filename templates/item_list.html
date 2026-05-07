@@ -57,6 +57,7 @@
                             <span class="status-pill {{ 'sold' if item.status == 1 else 'open' }}">
                                 {{ "已售出" if item.status == 1 else "未售出" }}
                             </span>
+                            <span class="field-hint">status = {{ item.status }}</span>
                         </div>
                         <div class="price">¥{{ "%.2f"|format(item.price) }}</div>
                     </div>
