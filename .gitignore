@@ -9,6 +9,8 @@ env/
 *.log
 test_*.db
 flask_*.log
+logs/
+data/test/
 
 .env
 .DS_Store

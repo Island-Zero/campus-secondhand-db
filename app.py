@@ -10,7 +10,7 @@ from flask import Flask, flash, g, redirect, render_template, request, send_from
 
 
 BASE_DIR = Path(__file__).resolve().parent
-BUNDLED_DATABASE = BASE_DIR / "campus_trade.db"
+BUNDLED_DATABASE = BASE_DIR / "data" / "campus_trade.db"
 DEFAULT_DATABASE = Path(tempfile.gettempdir()) / "campus_trade.db" if os.environ.get("VERCEL") else BUNDLED_DATABASE
 DATABASE = Path(os.environ.get("DB_PATH", DEFAULT_DATABASE))
 
