@@ -45,9 +45,13 @@
             <div class="eyebrow">快捷入口</div>
             <h2>常用功能</h2>
         </div>
-        <form method="post" action="{{ url_for('reset') }}" onsubmit="return confirm('确认要重置数据库到初始状态吗？');">
-            <button class="secondary" type="submit">重置数据</button>
-        </form>
+        {% if is_admin %}
+            <form method="post" action="{{ url_for('reset') }}" onsubmit="return confirm('确认要重置数据库到初始状态吗？');">
+                <button class="secondary" type="submit">重置数据</button>
+            </form>
+        {% else %}
+            <a class="button ghost" href="{{ url_for('login', next=request.full_path) }}">管理员登录</a>
+        {% endif %}
     </div>
     <div class="feature-grid">
         <a class="feature-card" href="{{ url_for('items') }}">

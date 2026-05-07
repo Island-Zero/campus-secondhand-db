@@ -108,6 +108,38 @@ select {
     color: var(--primary-dark);
 }
 
+.nav-user {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 8px 10px;
+    border-radius: var(--radius);
+    background: var(--blue-soft);
+    color: var(--blue);
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.nav-form {
+    display: inline-flex;
+    margin: 0;
+}
+
+.link-button {
+    min-height: 38px;
+    padding: 8px 12px;
+    background: transparent;
+    color: var(--muted);
+    border: 0;
+    box-shadow: none;
+}
+
+.link-button:hover {
+    background: var(--primary-soft);
+    color: var(--primary-dark);
+    box-shadow: none;
+}
+
 .page {
     width: min(1180px, calc(100% - 32px));
     margin: 0 auto;

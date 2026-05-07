@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}登录 - 校园二手交易平台{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('index') }}">首页</a>
+    <span>/</span>
+    <span>登录</span>
+</div>
+
+<section class="hero compact">
+    <div>
+        <div class="hero-kicker">Account</div>
+        <h1>登录系统</h1>
+        <p>普通用户只能浏览和查询数据；管理员可以新增商品、修改价格、删除未售商品、购买商品和重置数据。</p>
+    </div>
+</section>
+
+<section class="grid-two">
+    <div class="panel">
+        <div class="section-head">
+            <div>
+                <div class="eyebrow">登录</div>
+                <h2>账号登录</h2>
+            </div>
+        </div>
+        <form class="stack" method="post" action="{{ url_for('login') }}">
+            <input type="hidden" name="next" value="{{ next_url }}">
+            <label>用户名
+                <input name="username" autocomplete="username" required>
+            </label>
+            <label>密码
+                <input type="password" name="password" autocomplete="current-password" required>
+            </label>
+            <button type="submit">登录</button>
+        </form>
+    </div>
+
+    <div class="panel">
+        <div class="section-head">
+            <div>
+                <div class="eyebrow">测试账号</div>
+                <h2>角色说明</h2>
+            </div>
+        </div>
+        <div class="note-list">
+            <div class="note-item">
+                <strong>管理员</strong>
+                <p>用户名：admin；密码：admin123。拥有增删改、购买和重置数据权限。</p>
+            </div>
+            <div class="note-item">
+                <strong>普通用户</strong>
+                <p>用户名：user；密码：user123。只能浏览页面和执行查询，不能修改数据库。</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

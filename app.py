@@ -3,9 +3,10 @@ import shutil
 import sqlite3
 import tempfile
 from datetime import date
+from functools import wraps
 from pathlib import Path
 
-from flask import Flask, flash, g, redirect, render_template, request, send_from_directory, url_for
+from flask import Flask, flash, g, redirect, render_template, request, send_from_directory, session, url_for
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -15,6 +16,19 @@ DATABASE = Path(os.environ.get("DB_PATH", DEFAULT_DATABASE))
 
 app = Flask(__name__, static_folder=None)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-key")
+
+AUTH_USERS = {
+    "admin": {
+        "password": os.environ.get("ADMIN_PASSWORD", "admin123"),
+        "role": "admin",
+        "display_name": "管理员",
+    },
+    "user": {
+        "password": os.environ.get("USER_PASSWORD", "user123"),
+        "role": "viewer",
+        "display_name": "普通用户",
+    },
+}
 
 
 @app.route("/static/<path:filename>")
@@ -187,6 +201,48 @@ QUERY_DEFINITIONS = {
 
 
 QUERY_SECTIONS = ["基本查询", "连接查询", "聚合与分组", "视图"]
+
+
+def current_account():
+    username = session.get("username")
+    if not username:
+        return None
+    return {
+        "username": username,
+        "role": session.get("role"),
+        "display_name": session.get("display_name", username),
+        "is_admin": session.get("role") == "admin",
+    }
+
+
+@app.context_processor
+def inject_auth_context():
+    account = current_account()
+    return {
+        "current_account": account,
+        "is_admin": bool(account and account["is_admin"]),
+    }
+
+
+def safe_next_url(value):
+    if value and value.startswith("/") and not value.startswith("//"):
+        return value
+    return url_for("index")
+
+
+def admin_required(view_func):
+    @wraps(view_func)
+    def wrapped_view(*args, **kwargs):
+        account = current_account()
+        if not account:
+            flash("请先登录管理员账号后再执行该操作。", "error")
+            return redirect(url_for("login", next=request.referrer or request.path))
+        if not account["is_admin"]:
+            flash("当前账号只有查询权限，不能执行增删改或购买操作。", "error")
+            return redirect(request.referrer or url_for("index"))
+        return view_func(*args, **kwargs)
+
+    return wrapped_view
 
 
 def prepare_database_file():
@@ -564,6 +620,31 @@ def index():
     return render_template("index.html", stats=stats)
 
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    next_url = safe_next_url(request.values.get("next"))
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+        account = AUTH_USERS.get(username)
+        if account and password == account["password"]:
+            session.clear()
+            session["username"] = username
+            session["role"] = account["role"]
+            session["display_name"] = account["display_name"]
+            flash(f"已登录：{account['display_name']}。", "success")
+            return redirect(next_url)
+        flash("用户名或密码错误。", "error")
+    return render_template("login.html", next_url=next_url)
+
+
+@app.post("/logout")
+def logout():
+    session.clear()
+    flash("已退出登录。", "success")
+    return redirect(url_for("index"))
+
+
 @app.route("/users")
 def users():
     return render_template("users.html", users=rows("SELECT * FROM user ORDER BY user_id"))
@@ -607,6 +688,7 @@ def notes():
 
 
 @app.post("/items/add")
+@admin_required
 def add_item():
     item_id = request.form.get("item_id", "").strip() or next_id("i", "item", "item_id")
     try:
@@ -632,6 +714,7 @@ def add_item():
 
 
 @app.post("/items/<item_id>/price")
+@admin_required
 def update_price(item_id):
     try:
         get_db().execute(
@@ -647,6 +730,7 @@ def update_price(item_id):
 
 
 @app.post("/items/<item_id>/delete")
+@admin_required
 def delete_item(item_id):
     item = one("SELECT status FROM item WHERE item_id = ?", (item_id,))
     if item is None:
@@ -661,6 +745,7 @@ def delete_item(item_id):
 
 
 @app.post("/purchase")
+@admin_required
 def purchase():
     item_id = request.form["item_id"]
     buyer_id = request.form["buyer_id"]
@@ -706,6 +791,7 @@ def queries_panel():
 
 
 @app.post("/reset")
+@admin_required
 def reset():
     close_db()
     init_db(force=True)
